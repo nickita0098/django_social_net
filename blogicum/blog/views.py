@@ -14,8 +14,8 @@ from .mixins import CommentMixin, OnlyAuthorMixin, PostMixin
 
 def filter_post_for_public(manager):
     return manager.filter(pub_date__lte=now(),
-                 is_published=True,
-                 category__is_published=True)
+                          is_published=True,
+                          category__is_published=True)
 
 
 def anotate_order_for_post(data):
