@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+
 from .constants import MAX_CHAR_LENGTH, MAX_TITLE_LEN, DEF_SUFFIX
 
 
@@ -14,6 +15,7 @@ class IsPublishedCreatedAtModel(models.Model):
     created_at = models.DateTimeField('Добавлено', auto_now_add=True)
 
     class Meta:
+        ordering = ('created_at',)
         abstract = True
 
 
@@ -51,11 +53,8 @@ class Post(IsPublishedCreatedAtModel):
                                     help_text='Если установить дату и время '
                                     'в будущем — можно делать отложенные '
                                     'публикации.')
-    image = models.ImageField(
-        'Фото',
-        upload_to='post_images',
-        null=True,
-        blank=True)
+    image = models.ImageField('Фото', upload_to='post_images',
+                              null=True, blank=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE,
                                verbose_name='Автор публикации')
     location = models.ForeignKey(Location, on_delete=models.SET_NULL,
@@ -66,31 +65,35 @@ class Post(IsPublishedCreatedAtModel):
                                  null=True,
                                  verbose_name='Категория')
 
-    def get_absolute_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self.pk})
-
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
         ordering = ('-pub_date',)
         default_related_name = 'posts'
 
+    def get_absolute_url(self):
+        return reverse('blog:post_detail', kwargs={'post_id': self.pk})
+
     def __str__(self):
         return f'{self.title[:MAX_TITLE_LEN]:.<{DEF_SUFFIX}}'
 
 
-class Comments(models.Model):
+class Comment(IsPublishedCreatedAtModel):
     text = models.TextField('Текст комментария')
-    post = models.ForeignKey(
-        Post,
-        on_delete=models.CASCADE,
-        related_name='comments',
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post,
+                             on_delete=models.CASCADE,
+                             verbose_name='коментарий')
+    author = models.ForeignKey(User,
+                               on_delete=models.CASCADE,
+                               verbose_name='автор')
 
     def get_absolute_url(self):
         return reverse('blog:post_detail', kwargs={'post_id': self.post.pk})
 
     class Meta:
-        ordering = ('created_at',)
+        verbose_name = 'коментации'
+        verbose_name_plural = 'Коментарии'
+        default_related_name = 'comments'
+
+    def __str__(self):
+        return f'{self.text[:MAX_TITLE_LEN]:.<{DEF_SUFFIX}}'

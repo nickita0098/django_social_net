@@ -1,17 +1,19 @@
 from django import forms
-from .models import Comments, Post, User
+
+from .models import Comment, Post, User
 
 
 class CommentForm(forms.ModelForm):
     class Meta:
-        model = Comments
+        model = Comment
         fields = ('text',)
 
 
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ('title', 'text', 'category', 'pub_date', 'location', 'image')
+        fields = '__all__'
+        exclude = ('author',)
 
 
 class UserForm(forms.ModelForm):

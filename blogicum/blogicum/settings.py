@@ -6,7 +6,7 @@ SECRET_KEY = 'django-insecure-9=&(5%0t83#@b3!t$=o22wu9mzdlthdp@8!&mrlojyiwfkdexf
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'nickita.pythonanywhere.com', 'www.nickita.pythonanywhere.com']
 
 INSTALLED_APPS = [
     'blog.apps.BlogConfig',
