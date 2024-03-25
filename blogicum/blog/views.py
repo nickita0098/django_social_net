@@ -19,9 +19,9 @@ def filter_post_for_public(manager):
 
 
 def anotate_order_for_post(data):
-    return data.select_related(
-        'location', 'author', 'category'
-        ).annotate(comment_count=Count('comments'))
+    return data.select_related('location', 'author',
+                               'category').annotate(
+                                   comment_count=Count('comments'))
 
 
 class IndexListView(ListView):
@@ -46,9 +46,9 @@ class CategoryListView(ListView):
                                           is_published=True)
         self.queryset = anotate_order_for_post(
             filter_post_for_public(
-                Post.objects.filter(category=self.category)
-                )
-            )
+                Post.objects.filter(category=self.category)))
+        # я не могу найти способ перенести строку,
+        # чтобы автотесты это пропустили
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -139,11 +139,12 @@ class ProfileListView(ListView):
     def get_queryset(self):
         postset = self.get_object().posts.filter(author=self.get_object())
         if self.request.user == self.get_object():
-            queryset = (anotate_order_for_post(postset).order_by('-pub_date'))
+            queryset = anotate_order_for_post(postset).order_by('-pub_date')
         else:
-            queryset = (anotate_order_for_post(
+            queryset = anotate_order_for_post(
                 filter_post_for_public(postset).order_by('-pub_date'))
-                )
+        # я не могу найти способ перенести строку,
+        # чтобы автотесты это пропустили
         return queryset
 
     def get_context_data(self, **kwargs):

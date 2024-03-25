@@ -33,9 +33,8 @@ class PostAdmin(admin.ModelAdmin):
 
     def post_image(self, obj):
         if obj.image:
-            return mark_safe(
-                f'<img src={obj.image.url} width="80" height="60">'
-                )
+            img_url = obj.image.url
+            return mark_safe(f'<img src={img_url} width="80" height="60">')
         return 'отсутствует'
 
 
