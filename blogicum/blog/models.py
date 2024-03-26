@@ -8,14 +8,20 @@ from .constants import MAX_CHAR_LENGTH, MAX_TITLE_LEN, DEF_SUFFIX
 User = get_user_model()
 
 
-class IsPublishedCreatedAtModel(models.Model):
-    is_published = models.BooleanField('Опубликовано', default=True,
-                                       help_text='Снимите галочку, '
-                                       'чтобы скрыть публикацию.')
+class CreatedAt(models.Model):
     created_at = models.DateTimeField('Добавлено', auto_now_add=True)
 
     class Meta:
         ordering = ('created_at',)
+        abstract = True
+
+
+class IsPublishedCreatedAtModel(CreatedAt):
+    is_published = models.BooleanField('Опубликовано', default=True,
+                                       help_text='Снимите галочку, '
+                                       'чтобы скрыть публикацию.')
+
+    class Meta(CreatedAt.Meta):
         abstract = True
 
 
@@ -78,7 +84,7 @@ class Post(IsPublishedCreatedAtModel):
         return f'{self.title[:MAX_TITLE_LEN]:.<{DEF_SUFFIX}}'
 
 
-class Comment(IsPublishedCreatedAtModel):
+class Comment(CreatedAt):
     text = models.TextField('Текст комментария')
     post = models.ForeignKey(Post,
                              on_delete=models.CASCADE,

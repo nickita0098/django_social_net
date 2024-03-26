@@ -40,7 +40,6 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(Comment)
 class CommentsAdmin(admin.ModelAdmin):
-    list_display = ('text', 'post', 'is_published', 'created_at', 'author',)
-    list_editable = ('is_published',)
+    list_display = ('text', 'post', 'created_at', 'author',)
     search_fields = ('text',)
     list_filter = ('text',)

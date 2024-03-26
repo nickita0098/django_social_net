@@ -7,7 +7,7 @@
     {% bootstrap_button button_type="submit" content="Отправить" %}
   </form>
 {% endif %}
-<br>
+<br> 
 {% for comment in page_obj %}
   <div class="media mb-4">
     <div class="media-body">
@@ -30,3 +30,4 @@
     {% endif %}
   </div>
 {% endfor %}
+{% include "includes/paginator.html" %}

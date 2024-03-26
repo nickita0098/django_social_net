@@ -7,7 +7,7 @@ from django.views.generic import (ListView, CreateView, UpdateView,
                                   DeleteView)
 
 from .constants import POST_PER_PAGES
-from .models import Post, Category, Comment, User
+from .models import Post, Category, User
 from .form import CommentForm, PostForm, UserForm
 from .mixins import CommentMixin, OnlyAuthorMixin, PostMixin
 
@@ -19,41 +19,43 @@ def filter_post_for_public(manager):
 
 
 def anotate_order_for_post(data):
-    return data.select_related('location', 'author',
-                               'category').annotate(
-                                   comment_count=Count('comments'))
+    return data.select_related(
+        'location', 'author', 'category'
+    ).annotate(
+        comment_count=Count('comments')
+    ).order_by('-pub_date')
 
 
 class IndexListView(ListView):
     model = Post
-    ordering = 'pub_date'
     paginate_by = POST_PER_PAGES
     template_name = 'blog/index.html'
     queryset = anotate_order_for_post(filter_post_for_public(Post.objects))
-    ordering = ('-pub_date')
 
 
 class CategoryListView(ListView):
     model = Category
     template_name = 'blog/category.html'
     paginate_by = POST_PER_PAGES
-    ordering = ('-pub_date')
     category = None
 
-    def dispatch(self, request, *args, **kwargs):
-        self.category = get_object_or_404(Category,
-                                          slug=self.kwargs['category_slug'],
-                                          is_published=True)
-        self.queryset = anotate_order_for_post(
+    def get_category(self):
+        return get_object_or_404(
+            Category,
+            slug=self.kwargs['category_slug'],
+            is_published=True
+        )
+
+    def get_queryset(self):
+        return anotate_order_for_post(
             filter_post_for_public(
-                Post.objects.filter(category=self.category)))
-        # я не могу найти способ перенести строку,
-        # чтобы автотесты это пропустили
-        return super().dispatch(request, *args, **kwargs)
+                Post.objects.filter(category=self.get_category())
+            )
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['category'] = self.category
+        context['category'] = self.get_category()
         return context
 
 
@@ -70,12 +72,11 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class PostDetailView(ListView):
+class PostListView(ListView):
     model = Post
     template_name = 'blog/detail.html'
     context_object_name = 'post'
-    post = None
-    paginate_by = 10
+    paginate_by = POST_PER_PAGES
 
     def get_object(self, queryset=None):
         post = get_object_or_404(Post, pk=self.kwargs['post_id'])
@@ -85,8 +86,7 @@ class PostDetailView(ListView):
                                  pk=self.kwargs['post_id'])
 
     def get_queryset(self):
-        self.post = get_object_or_404(Post, pk=self.kwargs['post_id'])
-        return Comment.objects.filter(post=self.post)
+        return self.get_object().comments.all().select_related('author')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -107,6 +107,10 @@ class PostUpdateView(PostMixin, UpdateView):
 
 class CommentCreateView(CommentMixin, CreateView):
 
+    def dispatch(self, request, *args, **kwargs):
+        self.post_for_comment = get_object_or_404(Post, pk=kwargs['post_id'])
+        return super().dispatch(request, *args, **kwargs)
+
     def form_valid(self, form):
         form.instance.author = self.request.user
         form.instance.post = self.post_for_comment
@@ -114,14 +118,11 @@ class CommentCreateView(CommentMixin, CreateView):
 
 
 class CommentDeletePost(CommentMixin, OnlyAuthorMixin, DeleteView):
-
-    template_name = 'blog/comment.html'
-    success_url = reverse_lazy('blog:index')
+    pass
 
 
 class CommentUpdateView(CommentMixin, OnlyAuthorMixin, UpdateView):
-
-    template_name = 'blog/create.html'
+    pass
 
 
 class ProfileListView(ListView):
@@ -130,22 +131,16 @@ class ProfileListView(ListView):
     slug_url_kwarg = 'username'
     template_name = 'blog/profile.html'
     paginate_by = POST_PER_PAGES
-    ordering = ('-pub_date')
 
     def get_object(self, queryset=None):
-        username = self.kwargs['username']
-        return get_object_or_404(User, username=username)
+        return get_object_or_404(User, username=self.kwargs['username'])
 
     def get_queryset(self):
-        postset = self.get_object().posts.filter(author=self.get_object())
+        postset = self.get_object().posts.all()
+        anotated_query = anotate_order_for_post(postset)
         if self.request.user == self.get_object():
-            queryset = anotate_order_for_post(postset).order_by('-pub_date')
-        else:
-            queryset = anotate_order_for_post(
-                filter_post_for_public(postset).order_by('-pub_date'))
-        # я не могу найти способ перенести строку,
-        # чтобы автотесты это пропустили
-        return queryset
+            return anotated_query
+        return filter_post_for_public(anotated_query)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
