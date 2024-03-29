@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Comment, Post, User
+from .models import Comment, Post
 
 
 class CommentForm(forms.ModelForm):
@@ -13,9 +13,6 @@ class PostForm(forms.ModelForm):
     class Meta:
         model = Post
         exclude = ('author',)
-
-
-class UserForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = ('username', 'last_name', 'first_name', 'email')
+        widgets = {
+            'pub_date': forms.DateInput(attrs={'type': 'date'}),
+        }

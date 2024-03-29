@@ -1,15 +1,20 @@
-from django.shortcuts import get_object_or_404
-from django.utils.timezone import now
-from django.db.models import Count
+from django.contrib.auth import get_user_model
 from django.urls import reverse_lazy
+from django.utils.timezone import now
+from django.shortcuts import get_object_or_404
+from django.db.models import Count
+from django.views.generic import (ListView, CreateView, UpdateView, DeleteView)
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import (ListView, CreateView, UpdateView,
-                                  DeleteView)
 
 from .constants import POST_PER_PAGES
-from .models import Post, Category, User
-from .form import CommentForm, PostForm, UserForm
+
+from .models import Post, Category
+from .form import CommentForm, PostForm
 from .mixins import CommentMixin, OnlyAuthorMixin, PostMixin
+from users.form import UserForm
+
+
+User = get_user_model()
 
 
 def filter_post_for_public(manager):
@@ -107,13 +112,12 @@ class PostUpdateView(PostMixin, UpdateView):
 
 class CommentCreateView(CommentMixin, CreateView):
 
-    def dispatch(self, request, *args, **kwargs):
-        self.post_for_comment = get_object_or_404(Post, pk=kwargs['post_id'])
-        return super().dispatch(request, *args, **kwargs)
-
     def form_valid(self, form):
         form.instance.author = self.request.user
-        form.instance.post = self.post_for_comment
+        form.instance.post = get_object_or_404(
+            filter_post_for_public(Post.objects),
+            pk=self.kwargs['post_id']
+        )
         return super().form_valid(form)
 
 
@@ -152,7 +156,6 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     template_name = 'blog/user.html'
     form_class = UserForm
-    success_url = reverse_lazy('blog:index')
 
     def get_object(self, queryset=None):
         return self.request.user

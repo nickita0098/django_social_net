@@ -11,6 +11,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'nickita.pythonanywhere.com', 'www.ni
 INSTALLED_APPS = [
     'blog.apps.BlogConfig',
     'pages.apps.PagesConfig',
+    'users.apps.UsersConfig',
     'django_bootstrap5',
     'django.contrib.admin',
     'django.contrib.auth',
