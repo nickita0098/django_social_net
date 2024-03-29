@@ -85,6 +85,8 @@ LOGIN_URL = '/auth/login/'
 
 MEDIA_ROOT = BASE_DIR / 'media'
 
+AUTH_USER_MODEL = 'users.MyUser'
+
 EMAIL_BACKEND = 'django.core.mail.backends.<тип бэкенда>.EmailBackend'
 
 EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
